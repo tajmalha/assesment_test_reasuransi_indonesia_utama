@@ -1,0 +1,4 @@
+Assumption_ID,Parameter,Value
+1,Mortality_Rate,0.0289
+2,Morbidity_Rate,0.0242
+3,Inflation_Rate,0.0314
