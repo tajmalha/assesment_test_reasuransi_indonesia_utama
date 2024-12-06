@@ -1,0 +1,41 @@
+# SCRIPT PIPELINE DATA
+
+import pandas as pd
+
+# Load data dari csv
+contracts = pd.read_csv('DE_insurance_contracts.csv')
+claims = pd.read_csv('DE_claims.csv')
+assumptions = pd.read_csv('DE_assumptions.csv')
+
+# Mehitung data Claims untuk mendapatkan total claims per Contract_ID
+claims_summary = claims.groupby('Contract_ID', as_index=False)['Claim_Amount'].sum()
+claims_summary.rename(columns={'Claim_Amount': 'Total_Claims'}, inplace=True)
+
+# Join antara contracts dan claims_summary
+merged_data = pd.merge(contracts, claims_summary, on='Contract_ID', how='left')
+
+# Cleansin - isi data yang miss dengan 0
+merged_data['Total_Claims'] = merged_data['Total_Claims'].fillna(0)
+
+# Menghitung Future Cash Flow
+merged_data['Future_Cash_Flows'] = merged_data['Coverage'] - merged_data['Total_Claims']
+
+# Menghitung Contractual Service Margin (CSM)
+merged_data['CSM'] = merged_data['Future_Cash_Flows'] * merged_data['Discount_Rate']
+
+#===================================== Cleansing =====================================
+# Konvert date ke datetime
+for date_col in ['Start_Date', 'End_Date']:
+    merged_data[date_col] = pd.to_datetime(merged_data[date_col], errors='coerce')
+
+# Check untuk data yang null
+merged_data = merged_data.dropna(subset=['Start_Date', 'End_Date', 'Coverage', 'Discount_Rate'])
+#=====================================================================================
+
+output_columns = ['Contract_ID', 'Future_Cash_Flows', 'CSM']
+
+print(output_columns)
+
+merged_data[output_columns].to_csv('ifrs17_calculations.csv', index=False)
+
+print("Hasil telah tersimpan pada ifrs17_calculations.csv")
