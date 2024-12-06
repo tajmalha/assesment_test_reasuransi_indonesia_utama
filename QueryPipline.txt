@@ -1,0 +1,18 @@
+WITH ClaimsSummary AS (
+    SELECT 
+        Contract_ID,
+        SUM(Claim_Amount) AS Total_Claims
+    FROM claims
+    GROUP BY Contract_ID
+),
+
+ContractCalculations AS (
+    SELECT 
+        c.Contract_ID,
+        c.Coverage - COALESCE(cs.Total_Claims, 0) AS Future_Cash_Flows,
+        (c.Coverage - COALESCE(cs.Total_Claims, 0)) * c.Discount_Rate AS CSM
+    FROM insurance_contracts c
+    LEFT JOIN ClaimsSummary cs ON c.Contract_ID = cs.Contract_ID
+)
+
+SELECT * FROM ContractCalculations
